@@ -198,7 +198,7 @@ and submit a pull request.
 
 ## 📜 License
 
-MIT License
+APACHE2.0 License
 
 (Modified Indian Technology License)
 
