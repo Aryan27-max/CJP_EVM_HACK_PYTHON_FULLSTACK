@@ -6,7 +6,21 @@ A completely serious, highly advanced, government-certified, Bluetooth-enabled E
 
 **Disclaimer:** This project is a satirical meme website inspired by viral internet memes and does not perform any real hacking, election manipulation, cybersecurity operations, or Python Fullstack wizardry.
 
----
+
+## 💝 Support (Buy me a coffee)
+
+If you enjoyed this project and want to support future research into:
+
+- Bluetooth EVM Connectivity
+- Democracy.dll Reverse Engineering
+- Advanced Syntax Error Generation
+- Trust Me Bro Algorithms™
+
+<p align="center">
+  <a href="https://buymeacoffee.com/aryan27.max">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="300">
+  </a>
+</p>
 
 ## 🚀 Live Demo
 
