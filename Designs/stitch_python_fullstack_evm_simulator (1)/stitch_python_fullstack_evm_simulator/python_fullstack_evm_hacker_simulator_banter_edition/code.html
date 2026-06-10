@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PYTHON FULLSTACK - EVM HACK</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&amp;family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "bg-peach": "#FDF0E0",
+                        "accent-magenta": "#FF00FF",
+                        "accent-yellow": "#FFFF00",
+                        "accent-cyan": "#00FFFF",
+                        "brutal-black": "#000000",
+                        "brutal-white": "#FFFFFF"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0px",
+                        lg: "0px",
+                        xl: "0px",
+                        full: "0px",
+                        "brutal": "4px"
+                    },
+                    borderWidth: {
+                        "brutal": "4px"
+                    },
+                    boxShadow: {
+                        "brutal": "4px 4px 0px 0px rgba(0,0,0,1)",
+                        "brutal-lg": "8px 8px 0px 0px rgba(0,0,0,1)",
+                        "brutal-magenta": "4px 4px 0px 0px #FF00FF",
+                        "brutal-yellow": "4px 4px 0px 0px #FFFF00",
+                        "brutal-cyan": "4px 4px 0px 0px #00FFFF"
+                    },
+                    spacing: {
+                        "margin-desktop": "64px",
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "gutter": "24px",
+                        "container-max": "1440px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Sora"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"], // Changed from JetBrains Mono for broader brutalist feel in buttons
+                        "title-md": ["Sora"],
+                        "headline-lg-mobile": ["Sora"],
+                        "display-xl": ["Sora"],
+                        "body-md": ["Inter"],
+                        "code-sm": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "900" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "700" }],
+                        "label-caps": ["14px", { lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "900" }],
+                        "title-md": ["24px", { lineHeight: "32px", fontWeight: "900" }],
+                        "headline-lg-mobile": ["32px", { lineHeight: "38px", fontWeight: "900" }],
+                        "display-xl": ["80px", { lineHeight: "80px", letterSpacing: "-0.04em", fontWeight: "900" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "700" }],
+                        "code-sm": ["12px", { lineHeight: "16px", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #FDF0E0;
+            background-image: radial-gradient(#000 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .brutal-card {
+            background: white;
+            border: 4px solid black;
+            box-shadow: 8px 8px 0px 0px black;
+        }
+
+        .brutal-text-shadow {
+            text-shadow: 4px 4px 0px black;
+        }
+
+        .brutal-text-shadow-magenta {
+            text-shadow: 4px 4px 0px #FF00FF;
+        }
+        
+        .brutal-text-shadow-cyan {
+            text-shadow: 4px 4px 0px #00FFFF;
+        }
+
+        .screen-transition {
+            transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hidden-screen {
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            transform: scale(0.95);
+            z-index: -1;
+        }
+        .active-screen {
+            opacity: 1;
+            pointer-events: auto;
+            position: relative;
+            transform: scale(1);
+            z-index: 10;
+            min-height: 100vh;
+        }
+
+        /* Animations */
+        @keyframes sticker-wobble {
+            0%, 100% { transform: rotate(-3deg) scale(1); }
+            50% { transform: rotate(3deg) scale(1.05); }
+        }
+        
+        @keyframes brutal-shake {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-5px, 5px) rotate(-1deg); }
+            20%, 40%, 60%, 80% { transform: translate(5px, -5px) rotate(1deg); }
+        }
+
+        .is-shaking { animation: brutal-shake 0.3s cubic-bezier(.36,.07,.19,.97) both infinite; }
+
+        .sticker-label {
+            display: inline-block;
+            border: 4px solid black;
+            padding: 4px 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0px 0px black;
+        }
+
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        .glitch-text::before {
+            left: 4px;
+            text-shadow: -2px 0 #00FFFF;
+            animation: glitch 1s infinite linear alternate-reverse;
+            z-index: -1;
+        }
+        .glitch-text::after {
+            left: -4px;
+            text-shadow: 2px 0 #FF00FF;
+            animation: glitch 1.5s infinite linear alternate-reverse;
+            z-index: -1;
+        }
+        
+        @keyframes glitch {
+            0% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 2px); }
+            20% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+            40% { clip-path: inset(50% 0 30% 0); transform: translate(-2px, -2px); }
+            60% { clip-path: inset(5% 0 80% 0); transform: translate(2px, 2px); }
+            80% { clip-path: inset(40% 0 40% 0); transform: translate(-2px, 2px); }
+            100% { clip-path: inset(10% 0 80% 0); transform: translate(2px, -2px); }
+        }
+
+        .hazard-bg-brutal {
+            background-image: repeating-linear-gradient(
+                -45deg,
+                #000,
+                #000 10px,
+                #FFFF00 10px,
+                #FFFF00 20px
+            );
+        }
+    </style>
+</head>
+<body class="text-brutal-black font-body-md overflow-x-hidden selection:bg-accent-magenta selection:text-white">
+<!-- FLOATING STICKERS -->
+<div class="fixed top-32 left-10 z-0 transform -rotate-6">
+<div class="sticker-label bg-accent-magenta text-white shadow-brutal text-xl">✨ NO COPE ZONE</div>
+</div>
+<div class="fixed top-40 right-20 z-0 transform rotate-12">
+<div class="sticker-label bg-accent-yellow text-brutal-black shadow-brutal text-xl">🤫 TRASH TALK ONLY</div>
+</div>
+<!-- TOP NAVIGATION SHELL -->
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 bg-bg-peach/90 border-b-brutal border-brutal-black backdrop-blur-sm">
+<div class="font-headline-lg-mobile text-headline-lg-mobile font-black tracking-tighter text-accent-yellow brutal-text-shadow transform -rotate-2">
+            GEN'Z - BANTER BOX
+            <div class="text-xs font-label-caps text-accent-magenta brutal-text-shadow-none tracking-normal mt-1 italic">ROAST. MEME. RULE THE MATCH.</div>
+</div>
+<div class="hidden md:flex gap-4 items-center font-label-caps text-label-caps italic">
+<a class="bg-white border-brutal border-brutal-black px-4 py-2 shadow-brutal hover:shadow-brutal-lg hover:-translate-y-1 transition-all transform -rotate-2 flex items-center gap-2" href="#">
+<span class="text-lg">🥊</span> MATCHES
+        </a>
+<a class="bg-white border-brutal border-brutal-black px-4 py-2 shadow-brutal hover:shadow-brutal-lg hover:-translate-y-1 transition-all transform rotate-1 flex items-center gap-2" href="#">
+<span class="text-lg">🎨</span> STUDIO
+        </a>
+<a class="bg-accent-yellow border-brutal border-brutal-black px-4 py-2 shadow-brutal hover:shadow-brutal-lg hover:-translate-y-1 transition-all transform -rotate-1 flex items-center gap-2" href="#">
+<span class="text-lg">🏆</span> HALL OF FAME
+        </a>
+<a class="bg-accent-cyan border-brutal border-brutal-black px-4 py-2 shadow-brutal hover:shadow-brutal-lg hover:-translate-y-1 transition-all transform rotate-2 flex items-center gap-2" href="#">
+<span class="text-lg">👤</span> PROFILE
+        </a>
+</div>
+</nav>
+<!-- HUD ELEMENTS -->
+<div class="fixed top-28 right-8 z-40 flex flex-col gap-2 font-code-sm text-code-sm">
+<div class="bg-white border-brutal border-brutal-black px-3 py-1 shadow-brutal flex justify-between w-40 transform rotate-2"><span class="text-accent-magenta">CPU:</span><span id="hud-cpu">12%</span></div>
+<div class="bg-white border-brutal border-brutal-black px-3 py-1 shadow-brutal flex justify-between w-40 transform -rotate-1"><span class="text-accent-cyan">RAM:</span><span id="hud-ram">4096 MB</span></div>
+<div class="bg-accent-yellow border-brutal border-brutal-black px-3 py-1 shadow-brutal flex justify-between w-40 transform rotate-1"><span class="text-brutal-black">NET:</span><span class="animate-pulse font-black">ESTABLISHED</span></div>
+</div>
+<!-- MAIN CONTENT CONTAINER -->
+<main class="relative z-20 pt-32 pb-20 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto min-h-screen">
+<!-- SCREEN 1: LOADING -->
+<section class="active-screen flex flex-col items-center justify-center min-h-[80vh]" id="screen-1">
+<div class="brutal-card p-12 flex flex-col items-center transform -rotate-1 relative">
+<div class="absolute -top-6 -left-6 sticker-label bg-accent-cyan text-brutal-black transform -rotate-12 text-sm z-10">INITIALIZING...</div>
+<div class="relative w-48 h-48 mb-8 animate-[sticker-wobble_3s_infinite]">
+<img alt="Loading Logo" class="w-full h-full object-contain filter drop-shadow-[8px_8px_0px_rgba(0,0,0,1)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBW10DL56OwDD6K4Axb4qaSNl3JrdIKM7hFvunr9O8yLkUhBSoSfapYacnqGWg_wuFOu-vRYEM_kdAfN13dfW2X5c5bgRwvK_SsPy3Nr8owO0UqtWMv1LqlEgFqWbvNdxz6mxO4mjsWkYe9Bx0rLnA_zoNQPzItYQ0YKEgB6KxkWQ3b7dZi1tibXqIRcZzI58Z7sGf-ZMgenJeiNqlKU8dis6QAt5VM7RPAxdrOctag73zZntGuK0b-JB-1A0Z48XALvBOa60EQFF4"/>
+</div>
+<div class="w-full max-w-md text-center">
+<div class="font-label-caps text-label-caps text-brutal-black mb-4 uppercase font-black" id="loading-text">
+                    BOOTING PYTHON FULLSTACK...
+                </div>
+<div class="h-6 w-full border-brutal border-brutal-black bg-white overflow-hidden relative shadow-brutal">
+<div class="h-full bg-accent-magenta w-0 transition-all duration-300 ease-out border-r-brutal border-brutal-black" id="loading-progress"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- SCREEN 2: HERO -->
+<section class="hidden-screen flex flex-col items-center justify-center min-h-[80vh] text-center" id="screen-2">
+<div class="z-10 flex flex-col items-center max-w-4xl">
+<div class="flex gap-2 mb-6">
+<div class="sticker-label bg-brutal-black text-accent-yellow">CRICKET FAN CLASH</div>
+<div class="sticker-label bg-accent-magenta text-white">BETA VERSION</div>
+</div>
+<h1 class="font-display-xl text-display-xl font-extrabold text-brutal-black mb-6 uppercase brutal-text-shadow-magenta leading-[0.9] transform -rotate-2">
+                    PYTHON <br/>FULLSTACK
+                </h1>
+<p class="font-title-md text-title-md text-brutal-black mb-10 max-w-2xl mx-auto">
+                    Choose your IPL banter mascot below, join active match battlegrounds, and draft the most savage memes in our studio to silence the rival fans.
+                </p>
+<div class="w-full max-w-lg bg-white border-brutal border-brutal-black shadow-brutal p-2 mb-8 relative group transform rotate-1">
+<div class="flex items-center bg-bg-peach px-4 py-3 border-brutal border-brutal-black">
+<span class="font-code-sm text-brutal-black mr-3 font-black">root@democracy:~#</span>
+<input class="bg-transparent border-none outline-none text-accent-magenta font-code-sm font-black w-full focus:ring-0 p-0 shadow-none cursor-default" readonly="" type="text" value="pip install evm_hack"/>
+</div>
+</div>
+<button class="bg-accent-yellow border-brutal border-brutal-black text-brutal-black font-headline-lg-mobile text-headline-lg-mobile px-12 py-4 shadow-brutal transition-all hover:translate-y-1 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-2 active:shadow-none uppercase font-black transform -rotate-1" id="btn-launch">
+                    SYNTAX ERROR !!
+                </button>
+</div>
+<div class="mt-16 w-full max-w-3xl border-brutal border-brutal-black bg-white shadow-brutal-lg relative h-64 overflow-hidden">
+<div class="absolute top-4 left-4 sticker-label bg-accent-magenta text-white transform -rotate-3 z-10">ACTIVE FIGHTER</div>
+<div class="absolute top-4 right-4 sticker-label bg-accent-yellow text-brutal-black transform rotate-3 z-10">2.4M FANS</div>
+<div class="absolute inset-0 flex items-center justify-center p-8 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
+<img alt="Smiling Cat Hack Entity" class="h-full object-contain filter drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] animate-[sticker-wobble_4s_infinite]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWkYrqeKUB0fpHp7Tuc7swOBMhZfa1lRJPIYFCGa8JIWkWqA_ynr2bLuGGcqlB-jdqp1-qH11kjeOnpuxi0ATKogW_fHb3NpyV-jkb_6PoUqJ0l4FlPhhjvCeiXY_WO83p0Ct6dw5LXGhfAWJBgiB_goylsrzA7u150X4Y2kAnY3vUB7FQ3I3YzMhTF4-acQA9C5IKYBqHdTWsKIabV6qnsqau_1zJndHlQSh2PFM-1Ic6jG_b4gFd_1apYvzLnQflAMZRM1rFVe0"/>
+</div>
+</div>
+</section>
+<!-- SCREEN 3: ATTACK SEQUENCE -->
+<section class="hidden-screen flex flex-col gap-8 min-h-[80vh] py-12" id="screen-3">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
+<!-- Tenor GIF -->
+<div class="col-span-1 lg:col-span-5 flex items-center justify-center">
+<div class="w-full bg-white p-4 border-brutal border-brutal-black shadow-brutal transform -rotate-2 relative">
+<div class="absolute -top-4 -right-4 sticker-label bg-accent-cyan text-brutal-black transform rotate-6 z-10">HACK IN PROGRESS</div>
+<div class="tenor-gif-embed border-brutal border-brutal-black" data-aspect-ratio="1" data-postid="1801489096118920303" data-share-method="host" data-width="100%"></div>
+<script async="" src="https://tenor.com/embed.js"></script>
+</div>
+</div>
+<!-- Terminal & Progress -->
+<div class="col-span-1 lg:col-span-7 flex flex-col gap-6">
+<!-- Progress Panel -->
+<div class="bg-white border-brutal border-brutal-black shadow-brutal p-6 flex flex-col gap-4 transform rotate-1">
+<div class="flex justify-between items-end font-code-sm font-black uppercase">
+<span class="text-accent-magenta animate-pulse text-xl">OPERATION: SYNTAX_ERROR</span>
+<span class="text-display-xl font-display-xl text-brutal-black brutal-text-shadow-yellow text-4xl" id="hack-progress-text">13%</span>
+</div>
+<div class="h-8 w-full bg-bg-peach border-brutal border-brutal-black overflow-hidden relative">
+<div class="hazard-bg-brutal w-full h-full absolute"></div>
+<div class="h-full bg-accent-magenta border-r-brutal border-brutal-black w-[13%] transition-all duration-200 relative z-10" id="hack-progress-bar"></div>
+</div>
+</div>
+<!-- Terminal Logs -->
+<div class="bg-brutal-black border-brutal border-brutal-black shadow-brutal-magenta p-6 flex-1 font-code-sm text-code-sm overflow-hidden relative transform -rotate-1">
+<div class="flex flex-col gap-3 h-64 overflow-y-auto pr-4 text-accent-cyan font-black uppercase tracking-widest" id="terminal-logs">
+<!-- Logs injected via JS -->
+</div>
+</div>
+</div>
+</div>
+<!-- Random Popups Container -->
+<div class="fixed inset-0 pointer-events-none z-50 overflow-hidden" id="popup-container"></div>
+</section>
+<!-- SCREEN 4: CRITICAL MOMENT -->
+<section class="hidden-screen flex flex-col items-center justify-center min-h-[80vh] relative" id="screen-4">
+<div class="absolute inset-0 bg-accent-magenta mix-blend-multiply opacity-0" id="red-flash"></div>
+<div class="text-center z-10 brutal-card p-16 transform rotate-2">
+<h2 class="font-display-xl text-[6vw] leading-[0.9] font-black text-brutal-black mb-4 uppercase brutal-text-shadow glitch-text" data-text="SYNTAX ERROR DETECTED">
+                    SYNTAX ERROR<br/>DETECTED
+                </h2>
+<div class="mt-8">
+<span class="font-headline-lg text-headline-lg text-accent-yellow bg-brutal-black border-brutal border-brutal-black px-6 py-4 uppercase block shadow-brutal-magenta transform -rotate-2">
+                        DEMOCRACY.EXE HAS STOPPED WORKING
+                    </span>
+</div>
+</div>
+</section>
+<!-- SCREEN 5: FINAL RESULTS -->
+<section class="hidden-screen flex flex-col items-center py-12 min-h-[80vh]" id="screen-5">
+<h2 class="font-headline-lg text-headline-lg font-black text-brutal-black mb-16 text-center uppercase brutal-text-shadow-cyan transform -rotate-2">
+                FINAL ELECTION RESULTS
+            </h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+<!-- Card 1 -->
+<div class="bg-white border-brutal border-brutal-black shadow-brutal group transform translate-y-10 opacity-0 result-card rotate-1 hover:-translate-y-2 hover:shadow-brutal-lg transition-all">
+<div class="h-64 border-b-brutal border-brutal-black overflow-hidden relative bg-bg-peach p-4">
+<img alt="Prime Minister Result" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-300 border-brutal border-brutal-black" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdzmuAp2tC3wXiWxLBdgllKVrUPoRFDXGpXr2qc_xchGoYHZ3rL5bSY2I9jtCuj7hfVe-3-7YmF64iPWbAmC1x77lk3EUZfQlpjLvS0oiIttx9tDUQjwSR68VzzTEuq4nuYn6bMDy_AjxfHVv9SNYwJBNwXE-qXdjif-yrWO3xpFtyYNhxRGbMGGGVL67cj0xwtOkIOVnWt2w-cAwYlHsp_9oeEzCRNn_SVDUJulIQZ6ssx5r9I89M6ov9-7I8QF-FVD0_8i1pmQ0"/>
+<div class="absolute top-2 right-2 sticker-label bg-accent-yellow text-brutal-black text-xs transform rotate-6">WINNER</div>
+</div>
+<div class="p-6 relative z-20">
+<div class="font-label-caps text-accent-magenta text-xs mb-1 font-black">ROLE:</div>
+<h3 class="font-title-md text-title-md text-brutal-black font-black uppercase">Prime Minister</h3>
+<div class="mt-4 h-4 w-full bg-bg-peach border-brutal border-brutal-black">
+<div class="h-full bg-accent-cyan border-r-brutal border-brutal-black w-[99%]"></div>
+</div>
+<div class="text-right font-code-sm text-xs mt-2 text-brutal-black font-black uppercase">99.9% VOTE SHARE</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white border-brutal border-brutal-black shadow-brutal group transform translate-y-10 opacity-0 result-card -rotate-2 hover:-translate-y-2 hover:shadow-brutal-lg transition-all" style="transition-delay: 100ms;">
+<div class="h-64 border-b-brutal border-brutal-black overflow-hidden relative bg-bg-peach p-4">
+<img alt="Home Minister Result" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-300 border-brutal border-brutal-black" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuSMiC7dkMoCQ17o_9I6zhNhHvKL9L7fR0P4QIspQKn5b3lPhz_ZfcTLyVYtYodFDbQzV131amG3D7n5SNn_-vP1g8E03wVtlrasa9Ma-i7qsm_0wBzhVGxbNtpf-60YhBXqeiOZ6rfUO5Eng7qvotVxseW6wcuBRqEZBSpzizmy20gjVsYl65lLcWNeS2-SUK6kE-oRTFCp5cjq0L5J0JVl1duYccvxfShuSU-2G1uml4iACdbDSUJ55KXzjJoMT3putsmM3RMIg"/>
+</div>
+<div class="p-6 relative z-20">
+<div class="font-label-caps text-accent-cyan text-xs mb-1 font-black">ROLE:</div>
+<h3 class="font-title-md text-title-md text-brutal-black font-black uppercase">Home Minister</h3>
+<div class="mt-4 h-4 w-full bg-bg-peach border-brutal border-brutal-black">
+<div class="h-full bg-accent-yellow border-r-brutal border-brutal-black w-[100%]"></div>
+</div>
+<div class="text-right font-code-sm text-xs mt-2 text-brutal-black font-black uppercase">100.1% VOTE SHARE (OVERFLOW)</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white border-brutal border-brutal-black shadow-brutal group transform translate-y-10 opacity-0 result-card rotate-2 hover:-translate-y-2 hover:shadow-brutal-lg transition-all" style="transition-delay: 200ms;">
+<div class="h-64 border-b-brutal border-brutal-black overflow-hidden relative bg-bg-peach p-4">
+<img alt="Chief Minister Result" class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-300 border-brutal border-brutal-black" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt12LWKOJgLDds-p2FV0Pgn4OdxXEBQSNitMzy4I9ttJHqRP9C6mxzEKvvugDqUaiotJmsLQAuYeAgan_NztBJ-sv3aOMZ-CReHlR3bhnDjmSegmfE4WOFE8hTG1ydG3VHwijCeZUpD8tFk03tLFPzPmxSnzXREYyavIJpQId3EBucPid9Mr6aNlScUh6nEmNrwX3Z012Z1367pAJFLx1-bqlKhE97rEskHdBz5-ZmFHZMLcofd_vNt3oRNpcwmqbvVisjRNsZOlY"/>
+</div>
+<div class="p-6 relative z-20">
+<div class="font-label-caps text-accent-yellow text-xs mb-1 font-black">ROLE:</div>
+<h3 class="font-title-md text-title-md text-brutal-black font-black uppercase">Chief Minister</h3>
+<div class="mt-4 h-4 w-full bg-bg-peach border-brutal border-brutal-black">
+<div class="h-full bg-accent-magenta border-r-brutal border-brutal-black w-[100%]"></div>
+</div>
+<div class="text-right font-code-sm text-xs mt-2 text-brutal-black font-black uppercase">BULLDOZER_API_ENABLED</div>
+</div>
+</div>
+</div>
+<button class="mt-16 bg-brutal-black border-brutal border-brutal-black text-white font-label-caps px-8 py-4 shadow-brutal hover:bg-white hover:text-brutal-black transition-colors flex items-center gap-2 text-xl font-black uppercase transform -rotate-1" id="btn-restart">
+<span class="material-symbols-outlined font-bold">restart_alt</span> REBOOT SYSTEM
+            </button>
+</section>
+</main>
+<!-- FOOTER SHELL -->
+<footer class="fixed bottom-0 left-0 w-full z-50 py-2 overflow-hidden whitespace-nowrap flex gap-gutter bg-accent-yellow border-t-brutal border-brutal-black shadow-[0_-4px_0_0_rgba(0,0,0,1)]">
+<div class="flex gap-12 font-code-sm text-code-sm uppercase tracking-widest text-brutal-black font-black w-full animate-[marquee_20s_linear_infinite]">
+<span class="min-w-max">© 2024 NEON_VOID_OPERATIONS // UNRESTRICTED_ACCESS_GRANTED</span>
+<span class="min-w-max text-accent-magenta">TICKER: BTC/EVM EXPLOIT DETECTED</span>
+<span class="min-w-max text-accent-cyan">GAS_PRICE: OMEGA_LEVEL</span>
+<span class="min-w-max">MEME_RATIO: 420.69%</span>
+<span class="min-w-max text-accent-magenta">SYSTEM_STABLE: FALSE</span>
+<!-- duplicate for marquee effect -->
+<span class="min-w-max">© 2024 NEON_VOID_OPERATIONS // UNRESTRICTED_ACCESS_GRANTED</span>
+</div>
+</footer>
+<style>
+    @keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+</style>
+<script>
+        // Fake HUD meters
+        setInterval(() => {
+            document.getElementById('hud-cpu').innerText = Math.floor(Math.random() * 80 + 10) + '%';
+            document.getElementById('hud-ram').innerText = Math.floor(Math.random() * 2000 + 4000) + ' MB';
+        }, 1000);
+
+        // Screen Management
+        const screens = {
+            1: document.getElementById('screen-1'),
+            2: document.getElementById('screen-2'),
+            3: document.getElementById('screen-3'),
+            4: document.getElementById('screen-4'),
+            5: document.getElementById('screen-5')
+        };
+
+        function switchScreen(from, to) {
+            screens[from].classList.remove('active-screen');
+            screens[from].classList.add('hidden-screen', 'screen-transition');
+            
+            setTimeout(() => {
+                screens[to].classList.remove('hidden-screen');
+                screens[to].classList.add('active-screen', 'screen-transition');
+                
+                // Trigger specific screen logic
+                if(to === 3) startAttackSequence();
+                if(to === 5) revealResults();
+            }, 50); // slight delay to allow display block to render before opacity change
+        }
+
+        // Screen 1: Loading Logic
+        const loadingTexts = [
+            "BOOTING PYTHON FULLSTACK...", 
+            "CONNECTING TO DEMOCRACY.EXE...", 
+            "LOCATING EVM VIA BLUETOOTH...", 
+            "INITIALIZING SYNTAX ERROR...", 
+            "DOWNLOADING ACHHE_DIN.DLL..."
+        ];
+        let textIndex = 0;
+        const textEl = document.getElementById('loading-text');
+        const progressEl = document.getElementById('loading-progress');
+        
+        const loadingInterval = setInterval(() => {
+            textIndex++;
+            if(textIndex < loadingTexts.length) {
+                textEl.innerText = loadingTexts[textIndex];
+                progressEl.style.width = `${(textIndex / loadingTexts.length) * 100}%`;
+            } else {
+                clearInterval(loadingInterval);
+                progressEl.style.width = '100%';
+                setTimeout(() => switchScreen(1, 2), 500);
+            }
+        }, 800);
+
+        // Screen 2: Button Click
+        document.getElementById('btn-launch').addEventListener('click', () => {
+            switchScreen(2, 3);
+        });
+
+        // Screen 3: Attack Sequence Logic
+        const logs = [
+            "Contacting Modi ji...",
+            "Authenticating JWTs from Amit Shah... [OK]",
+            "Fetching Buldozer APIs from AdityaNath Yogi... [OK]",
+            "Financing from Gautam Adani... [VERIFIED]",
+            "Vote Chori In Progress...",
+            "Connecting to EVM via Bluetooth Speaker... [CONNECTED]",
+            "sudo apt install achhe_din",
+            "Generating Python Fullstack Payload...",
+            "Changing 3 Lines Of Code...",
+            "Injecting Syntax Error...",
+            "Downloading Democracy.dll...",
+            "Democracy.exe responding."
+        ];
+        
+        const popups = [
+            "Aura +1000",
+            "Certified LinkedIn Expert Detected",
+            "VISHWAGURU MODE ACTIVATED",
+            "3rd Term Guaranteed"
+        ];
+
+        function startAttackSequence() {
+            const terminal = document.getElementById('terminal-logs');
+            const progText = document.getElementById('hack-progress-text');
+            const progBar = document.getElementById('hack-progress-bar');
+            const popupContainer = document.getElementById('popup-container');
+            
+            terminal.innerHTML = '';
+            let logIndex = 0;
+            let currentProgress = 13;
+
+            const attackInterval = setInterval(() => {
+                if(logIndex < logs.length) {
+                    // Add log
+                    const logLine = document.createElement('div');
+                    logLine.className = 'flex items-center gap-2 mb-1 opacity-0 transform translate-y-2 transition-all duration-200';
+                    logLine.innerHTML = `<span class="text-accent-yellow">></span> <span class="text-white">${logs[logIndex]}</span>`;
+                    terminal.appendChild(logLine);
+                    
+                    // Trigger reflow
+                    void logLine.offsetWidth;
+                    logLine.classList.remove('opacity-0', 'translate-y-2');
+                    terminal.scrollTop = terminal.scrollHeight;
+
+                    // Update Progress unpredictably
+                    currentProgress += Math.floor(Math.random() * 15);
+                    if(currentProgress > 99 && logIndex < logs.length -1) currentProgress = 99; // hold until last log
+                    if(logIndex === logs.length - 1) currentProgress = 100;
+                    
+                    progText.innerText = currentProgress + '%';
+                    progBar.style.width = currentProgress + '%';
+
+                    // Random Popups
+                    if(Math.random() > 0.6) {
+                        const popup = document.createElement('div');
+                        const rot = (Math.random() * 20) - 10;
+                        popup.className = `absolute sticker-label bg-white text-brutal-black text-xl z-50 transition-all duration-700`;
+                        popup.style.left = Math.random() * 70 + 10 + '%';
+                        popup.style.top = Math.random() * 70 + 10 + '%';
+                        popup.style.transform = `rotate(${rot}deg) scale(0.5)`;
+                        popup.innerText = popups[Math.floor(Math.random() * popups.length)];
+                        popupContainer.appendChild(popup);
+                        
+                        setTimeout(() => {
+                            popup.style.transform = `rotate(${rot}deg) scale(1.2)`;
+                        }, 10);
+
+                        setTimeout(() => {
+                            popup.style.opacity = '0';
+                            popup.style.transform = `rotate(${rot}deg) scale(1.5) translateY(-20px)`;
+                            setTimeout(() => popup.remove(), 700);
+                        }, 800);
+                    }
+
+                    logIndex++;
+                } else {
+                    clearInterval(attackInterval);
+                    setTimeout(triggerCriticalMoment, 1000);
+                }
+            }, 800);
+        }
+
+        // Screen 4: Critical Climax
+        function triggerCriticalMoment() {
+            switchScreen(3, 4);
+            document.body.classList.add('is-shaking');
+            const flash = document.getElementById('red-flash');
+            
+            // Flash effect
+            let flashes = 0;
+            const flashInt = setInterval(() => {
+                flash.style.opacity = flashes % 2 === 0 ? '0.8' : '0';
+                flashes++;
+                if(flashes > 7) clearInterval(flashInt);
+            }, 80);
+
+            setTimeout(() => {
+                document.body.classList.remove('is-shaking');
+                switchScreen(4, 5);
+            }, 2500);
+        }
+
+        // Screen 5: Reveal
+        function revealResults() {
+            const cards = document.querySelectorAll('.result-card');
+            cards.forEach((card, i) => {
+                setTimeout(() => {
+                    card.classList.remove('opacity-0', 'translate-y-10');
+                }, i * 200 + 300); // Faster reveal
+            });
+        }
+
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            location.reload();
+        });
+
+    </script>
+</body></html>
