@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Footer from "@/components/Footer";
+
 
 interface StickerPopup {
   id: string;
@@ -454,7 +456,16 @@ export default function Home() {
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full items-stretch">
             {/* Tenor GIF */}
-            <div className="col-span-1 lg:col-span-5 flex items-center justify-center">
+            <div className="col-span-1 lg:col-span-5 flex flex-col items-center justify-center">
+              {/* Scroll Down Indicator (Mobile Only) */}
+              <button
+                onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" })}
+                className="flex lg:hidden mb-6 animate-bounce z-10 cursor-pointer border-none bg-transparent p-0 outline-none"
+              >
+                <span className="bg-accent-yellow border-brutal border-brutal-black text-brutal-black px-4 py-1.5 text-xs font-black uppercase shadow-brutal tracking-wider flex items-center gap-2">
+                  SCROLL DOWN <span className="text-sm font-black">↓</span>
+                </span>
+              </button>
               <div className="w-full bg-white p-4 border-brutal border-brutal-black shadow-brutal transform -rotate-2 relative">
                 <div className="absolute -top-4 -right-4 sticker-label bg-accent-cyan text-brutal-black transform rotate-6 z-10">
                   HACK IN PROGRESS
@@ -659,37 +670,7 @@ export default function Home() {
       </main>
 
       {/* FOOTER SHELL */}
-      <footer className="fixed bottom-0 left-0 w-full z-50 py-2 overflow-hidden whitespace-nowrap flex gap-gutter bg-accent-yellow border-t-brutal border-brutal-black shadow-[0_-4px_0_0_rgba(0,0,0,1)] select-none">
-        <div className="flex gap-12 font-code-sm text-code-sm uppercase tracking-widest text-brutal-black font-black w-full animate-marquee">
-          <span className="min-w-max">
-            © 2024 NEON_VOID_OPERATIONS // UNRESTRICTED_ACCESS_GRANTED
-          </span>
-          <span className="min-w-max text-accent-magenta">
-            TICKER: BTC/EVM EXPLOIT DETECTED
-          </span>
-          <span className="min-w-max text-accent-cyan">
-            GAS_PRICE: OMEGA_LEVEL
-          </span>
-          <span className="min-w-max">MEME_RATIO: 420.69%</span>
-          <span className="min-w-max text-accent-magenta">
-            SYSTEM_STABLE: FALSE
-          </span>
-          {/* duplicate for marquee effect */}
-          <span className="min-w-max">
-            © 2024 NEON_VOID_OPERATIONS // UNRESTRICTED_ACCESS_GRANTED
-          </span>
-          <span className="min-w-max text-accent-magenta">
-            TICKER: BTC/EVM EXPLOIT DETECTED
-          </span>
-          <span className="min-w-max text-accent-cyan">
-            GAS_PRICE: OMEGA_LEVEL
-          </span>
-          <span className="min-w-max">MEME_RATIO: 420.69%</span>
-          <span className="min-w-max text-accent-magenta">
-            SYSTEM_STABLE: FALSE
-          </span>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
